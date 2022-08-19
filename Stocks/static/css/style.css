@@ -1,0 +1,65 @@
+body{
+    background: #f8f8ff;
+    padding: 1em;
+}
+
+table{
+    box-shadow: 3px 3px 5px grey;
+    border-radius: 3px;
+}
+.wide_td td{
+    padding: 0.2em 0.4em;
+}
+th{
+    background: lightgrey;
+}
+tr *{
+    _padding: 0.2em 0.5em 0.1em 0.5em;
+}
+
+tr:nth-child(2n+1){
+    background: #e0e0f0;
+}
+.red, .green, .unv{
+    width: 60px;
+}
+.red:hover, .green:hover, .unv:hover{
+    center: pointer;
+}
+.unv{
+    color: #aaf;
+}
+.red{
+    background: #f0a0a0;
+}
+.green{
+    background: #a0f0a0;
+}
+.red_border{
+    border: 2px solid red;
+}
+.green_border{
+    border: 2px solid green;
+}
+.center_pos{
+    text-align: center;
+}
+.td_div{
+    padding: 0.5em;
+}
+.td_sel:hover{
+    cursor: pointer;
+        background: #e0f8f8;
+}
+.td_marked{
+    box-shadow: inset 0 0 8px black;
+}
+.left_pos, .right_pos{
+    font-size: 8pt;
+}
+.right_pos{
+    text-align: right;
+}
+.left_pos{
+    text-align: left;
+}

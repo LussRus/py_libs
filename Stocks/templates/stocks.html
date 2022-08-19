@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>{{ ticker }}</h2>
+ <table class="wide_td">
+        {% for el in arr %}
+            {% set ii = loop.index %}
+            {% if ii % 8 == 1 %}
+                <tr>
+                {% endif %}
+                    <td {% if 'Target Price' in el[0] %}
+                                {% if '-' in el[1] %}
+                                    class = 'red_border td_sel'
+                                {% else %}
+                                    class = 'green_border td_sel'
+                                {% endif %}
+                            {% else %}
+                                {% if el[0] in marked_flds %}
+                                    class = 'td_sel td_marked'
+                                {% else %}
+                                    class = 'td_sel'
+                                {% endif %}
+                            {% endif %}>
+                        {{ el[0] }}
+                    </td>
+                    {% set sub_cl = 'green' %}
+                    {% set top_val = el[2] %}
+                    {% set btm_val = el[3] %}
+                    {% set tr_cl = 'right_pos' %}
+                    {% set lr_cl = 'left_pos' %}
+                    {% if '0.0' in el[1] %}
+                        {% set sub_cl = 'unv' %}
+                        {% set top_val = '' %}
+                        {% set btm_val = '' %}
+                    {% endif %}
+                    {% if '-' in el[1] %}
+                        {% set sub_cl = 'red' %}
+                        {% set top_val = el[3] %}
+                        {% set btm_val = el[2] %}
+                        {% set tr_cl = 'left_pos' %}
+                        {% set lr_cl = 'right_pos' %}
+                    {% endif %}
+                    <td class={{ sub_cl }}>
+                                <div class={{ tr_cl }}>{{ top_val }}</div>
+                                <div class = 'center_pos'>
+                                    {{ el[1] }}
+                                </div>
+                                <div class={{ lr_cl }}>{{ btm_val }}</div>
+                    </td>
+            {% if ii % 8 == 0 %}
+                </tr>
+            {% endif %}
+        {% endfor %}
+    </table>
+    <!-- Dynamic Modal -->
+    <style>
+        .modal{
+            background: radial-gradient(black, transparent);
+            padding-top: 5%;
+
+        }
+        .modal-dialog{
+            padding: 3em;
+            background: grey;
+            border-radius: 10px;
+            box-shadow: 3px 3px 10px;
+            background-image: linear-gradient(to bottom, #2d3436, #d3d3d3, #2d3436);
+            opacity: 0.9;
+        }
+        .modal-content{
+            background: rgba(0,0,0,0);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: none;
+        }
+        .modal-content input{
+            width: 8em;
+            background: rgba(0,0,0,0);
+            border-radius: 5px;
+            border: none;
+            box-shadow: inset 0 0 5px;
+            padding: 0.5em 0.8em;
+            margin: 0.5em;
+        }
+        .modal-content button{
+            background: #ddd;
+            border-radius: 5px;
+            border: none;
+            box-shadow:  2px 2px 5px;
+            padding: 0.5em 2em;
+            margin: 1em 0;
+        }
+        .modal-content label {
+            display: inline-block;
+            text-align: right;
+        }
+    </style>
+    <div class="modal fade" id="Modal" tabindex="-1" role="dialog" aria-labelledby="FormModal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+             <!-- load content here -->
+            </div>
+        </div>
+    </div>
+    <!-- End Dynamic Modal -->
+    <script type=text/javascript>
+        $(function() {
+            $(".td_sel").click(function (event) {
+                var el = $(this)[0];
+                var mark = 'mark';
+                if($(el).hasClass('td_marked')) mark = 'unmark';
+                $.getJSON('/stocks_table_td_sel',
+                    {
+                        action: mark,
+                        cell_text: $(this)[0].innerText
+                    },
+                    function(data) {
+                            console.log(data);
+                            var dt = data; // JSON.parse(data);
+                            if( dt.answer == 'mark'){
+                                var el = $('td:contains('+dt.cell_text+')');
+                                $(el).addClass('td_marked');
+                            }
+                            else {
+                                var el = $('td:contains('+dt.cell_text+')');
+                                $(el).removeClass('td_marked');
+                            }
+                        }
+                    );
+                return false;
+            });
+        });
+        $(document).on('click', '.red, .green, .unv', function(){
+                var div = $(this)[0];
+                var ch = $(div).children();
+                var prev = $(div).prev()[0].innerText;
+                var old_val = ch[0].innerText;
+                var curr_val = ch[1].innerText;
+                var percentage = curr_val.includes('%');
+                var new_val = ch[2].innerText;
+                var modal = $('.modal-content').empty();
+                $('<h4>', {text: 'Settings for: \"'+ prev +'\"'+(percentage?' ( % ) ':'') }).appendTo(modal);
+
+                var div = $('<div>').appendTo(modal);
+                    $('<label>', {for:'top', text:'Top line'}).appendTo(div);
+                    $('<input>', {placeholder:'top',id:'top'}).appendTo(div);
+
+                var div = $('<div>').appendTo(modal);
+                    $('<label>', {for:'btm', text:'Bottom line'}).appendTo(div);
+                    $('<input>', {placeholder:'bottom', id:'btm'}).appendTo(div);
+
+                var div = $('<div>').appendTo(modal);
+                    $('<label>', {for:'diff', text:'Differ to prev'}).appendTo(div);
+                    $('<input>', {placeholder:'difference', id:'diff'}).appendTo(div);
+                    $('<input>', {type:'checkbox', id:'diff_perc'}).css({ height:'20px', width:'20px'}).appendTo(div);
+                    $('<div>', {text:' %'}).css({display:'inline-block'}).appendTo(div);
+
+                $('<button>', {text: 'Set', type:'submit', id:'submit_modal'}).appendTo(modal);
+                $('.fade').css('opacity','1').show();
+            }
+        );
+        $(document).on('click', '.modal-content', function(e){
+            e.stopPropagation();
+        });
+        $(document).on('click', '.modal.fade', function(e){
+            $('.fade').css('opacity','0').hide();
+        });
+        $(document).on('click', '#submit_modal', function(){
+            var inps = $('.modal-content').find('input');
+            var arr = {};
+            var has_new = false;
+            for(var ii = 0; ii < inps.length; ii++) {
+                arr[inps[ii].id] = inps[ii].value;
+            }
+            var ch_box = $('#diff_perc').is(":checked");
+            arr['diff_perc'] = ch_box?'%':'';
+
+            //if( has_new ){
+                $.ajax({
+                    url: '/stocks/req',
+                    data: JSON.stringify( {
+                        action: 'update',
+                        arr: arr
+                    }),
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    success: function(d){
+                        console.log(d);
+                    }
+                });
+           // }
+            $('.fade').css('opacity','0').hide();
+        });
+
+    </script>
+{% endblock %}
